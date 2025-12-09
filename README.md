@@ -6,6 +6,7 @@ function you can call:
 ```
 disp.begin(18);               //how many digits in module, support multi module just connecting SDO to SDI other module and count how many digits do you have
 disp.clear();                 //like just make display blank
+disp.clearRange(0, 3);        //clear 3 digit range start from digit 0
 disp.setBrightness(10);       //set 0 to 255
 disp.displayOn();
 disp.displayOff();
