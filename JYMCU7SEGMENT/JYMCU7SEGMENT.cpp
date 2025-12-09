@@ -75,14 +75,88 @@ void JYMCU7SEGMENT::clear() {
 }
 
 // ============================================================================
-// PER-DIGIT PRINT (LEFT→RIGHT)
+// NEW: clearRange - clear specific range of digits
 // ============================================================================
-void JYMCU7SEGMENT::printIntAt(uint16_t pos, uint8_t value) {
-    if (pos >= numDigits || value > 9) return;
-    buffer[pos] = DIGIT_MAP[value];
+void JYMCU7SEGMENT::clearRange(uint16_t start, uint16_t length) {
+    for (uint16_t i = 0; i < length && (start + i) < numDigits; i++) {
+        buffer[start + i] = CH_BLANK;
+    }
+    
     if (autoRender) render();
 }
 
+// ============================================================================
+// PER-DIGIT PRINT (LEFT→RIGHT)
+// ============================================================================
+// ============================================================================
+// FIXED: printIntAt - handle multi-digit numbers
+// ============================================================================
+void JYMCU7SEGMENT::printIntAt(uint16_t pos, long value) {
+    // Handle negative numbers
+    bool isNegative = false;
+    if (value < 0) {
+        isNegative = true;
+        value = -value;
+    }
+    
+    // Convert number to string to get digits
+    char temp[20];
+    ltoa(value, temp, 10);
+    
+    uint16_t startPos = pos;
+    
+    // Print negative sign if needed
+    if (isNegative) {
+        if (startPos < numDigits) {
+            buffer[startPos] = CH_MINUS;
+            startPos++;
+        }
+    }
+    
+    // Print each digit from left to right
+    for (uint16_t i = 0; temp[i] != '\0' && startPos < numDigits; i++) {
+        if (temp[i] >= '0' && temp[i] <= '9') {
+            buffer[startPos] = DIGIT_MAP[temp[i] - '0'];
+            startPos++;
+        }
+    }
+    
+    if (autoRender) render();
+}
+
+// ============================================================================
+// FIXED: printCharAt - handle string of characters
+// ============================================================================
+void JYMCU7SEGMENT::printCharAt(uint16_t pos, const char* str) {
+    uint16_t currentPos = pos;
+    
+    for (uint16_t i = 0; str[i] != '\0' && currentPos < numDigits; i++) {
+        // Handle dot - apply to previous digit
+        if (str[i] == '.') {
+            if (currentPos > pos) {
+                buffer[currentPos - 1] |= 0x80;
+            }
+            continue; // don't consume a new position
+        }
+        
+        uint8_t p = CH_BLANK;
+        if (str[i] >= '0' && str[i] <= '9') 
+            p = DIGIT_MAP[str[i] - '0'];
+        else if (str[i] == '-')        
+            p = CH_MINUS;
+        else if (str[i] == 'C' || str[i] == 'c') 
+            p = CH_C;
+        else if (str[i] == '°')        
+            p = CH_DEG;
+        
+        buffer[currentPos] = p;
+        currentPos++;
+    }
+    
+    if (autoRender) render();
+}
+
+// Overload: single character version (backward compatibility)
 void JYMCU7SEGMENT::printCharAt(uint16_t pos, char c, bool dot) {
     if (pos >= numDigits) return;
 
@@ -98,6 +172,37 @@ void JYMCU7SEGMENT::printCharAt(uint16_t pos, char c, bool dot) {
     if (autoRender) render();
 }
 
+// ============================================================================
+// NEW: printStringAt - print string starting from specific position
+// ============================================================================
+void JYMCU7SEGMENT::printStringAt(uint16_t pos, const char* str) {
+    uint16_t currentPos = pos;
+    
+    for (uint16_t i = 0; str[i] != '\0' && currentPos < numDigits; i++) {
+        // Handle dot - apply to previous digit
+        if (str[i] == '.') {
+            if (currentPos > pos) {
+                buffer[currentPos - 1] |= 0x80;
+            }
+            continue; // don't consume a new position
+        }
+        
+        uint8_t p = CH_BLANK;
+        if (str[i] >= '0' && str[i] <= '9') 
+            p = DIGIT_MAP[str[i] - '0'];
+        else if (str[i] == '-')        
+            p = CH_MINUS;
+        else if (str[i] == 'C' || str[i] == 'c') 
+            p = CH_C;
+        else if (str[i] == '°')        
+            p = CH_DEG;
+        
+        buffer[currentPos] = p;
+        currentPos++;
+    }
+    
+    if (autoRender) render();
+}
 void JYMCU7SEGMENT::printRawAt(uint16_t pos, uint8_t pattern) {
     if (pos >= numDigits) return;
     buffer[pos] = pattern;
