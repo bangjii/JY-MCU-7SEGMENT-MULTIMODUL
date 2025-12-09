@@ -18,7 +18,9 @@ public:
     void printString(const char* txt);
 
     // Per-digit printing (left-to-right indexing)
-    void printIntAt(uint16_t pos, uint8_t value);
+    void printIntAt(uint16_t pos, long value);
+    void printStringAt(uint16_t pos, const char* str);
+    void printCharAt(uint16_t pos, const char* str);
     void printCharAt(uint16_t pos, char c, bool dot = false);
     void printRawAt(uint16_t pos, uint8_t pattern);
 
@@ -27,6 +29,7 @@ public:
     void update();
 
     // Display control
+    void clearRange(uint16_t start, uint16_t length);
     void setBrightness(uint8_t level);
     void displayOn();
     void displayOff();
